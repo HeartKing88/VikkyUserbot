@@ -2,7 +2,11 @@ from pyrogram import filters
 from vikky import bot
 from vikky.utils.filters import owner
 import traceback
+import io
+import sys
 
+
+# 🧠 async exec
 async def aexec(code, client, message):
     exec(
         f'async def __aexec(client, message):\n'
@@ -10,17 +14,41 @@ async def aexec(code, client, message):
     )
     return await locals()['__aexec'](client, message)
 
-@bot.on_message(filters.command("eval") & owner)
+
+# 🚀 eval command (.eval / /eval)
+@bot.on_message(filters.command("eval", prefixes=[".", "/"]) & owner)
 async def eval_handler(client, message):
     if len(message.command) < 2:
-        return await message.reply("Give code")
+        return await message.reply("❌ Give some code")
 
     code = message.text.split(None, 1)[1]
 
+    # capture print output
+    old_stdout = sys.stdout
+    redirected_output = sys.stdout = io.StringIO()
+
     try:
         result = await aexec(code, client, message)
-        output = str(result) if result else "Done"
-    except Exception as e:
-        output = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+        stdout = redirected_output.getvalue()
 
-    await message.reply(output[:4000])
+        output = ""
+        if stdout:
+            output += stdout
+        if result:
+            output += str(result)
+
+        if not output:
+            output = "✅ Done"
+
+    except Exception:
+        output = traceback.format_exc()
+
+    finally:
+        sys.stdout = old_stdout
+
+    # split long output
+    if len(output) > 4000:
+        for i in range(0, len(output), 4000):
+            await message.reply(f"```{output[i:i+4000]}```")
+    else:
+        await message.reply(f"```{output}```")
