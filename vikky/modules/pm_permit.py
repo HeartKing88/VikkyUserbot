@@ -9,7 +9,7 @@ last_msg = {}
 
 LIMIT = 3
 
-# 🖼️ apni photo ka link ya file_id daalna
+# 🖼️ photo link
 PM_PIC = "https://graph.org/file/your_image.jpg"
 
 
